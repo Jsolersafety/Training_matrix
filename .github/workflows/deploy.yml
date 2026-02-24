@@ -42,15 +42,22 @@ jobs:
               sed -i "s/change-this-secret-key-in-production/$(openssl rand -hex 32)/" .env
             fi
             
-            # Run migrations
-            docker compose exec -T db psql -U training_app training_matrix -f /dev/stdin < scripts/migrate_001_role_type.sql 2>/dev/null || true
+            # Fix Dockerfile if needed
+            sed -i 's/RUN npm ci/RUN npm install/' frontend/Dockerfile
             
+            # Build and deploy
             docker compose build --no-cache
             docker compose down --remove-orphans 2>/dev/null || true
             docker compose up -d
             
-            sleep 15
+            # Wait for DB to be ready
+            sleep 10
             
+            # Run all migrations
+            docker compose exec -T db psql -U training_app training_matrix -c "ALTER TABLE roles ADD COLUMN IF NOT EXISTS role_type VARCHAR(20) DEFAULT 'primary';" 2>/dev/null || true
+            docker compose exec -T db psql -U training_app training_matrix -c "ALTER TABLE training_records ADD COLUMN IF NOT EXISTS cm10_link VARCHAR(500);" 2>/dev/null || true
+            
+            # Health check
             for i in $(seq 1 30); do
               if curl -sf http://localhost:8000/api/health > /dev/null 2>&1; then
                 echo "✅ Deploy successful!"

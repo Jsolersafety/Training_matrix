@@ -201,7 +201,11 @@ export default function Dashboard() {
     e.preventDefault()
     setSaving(true)
     try {
-      const data = { ...compForm, category_id: compForm.category_id ? parseInt(compForm.category_id) : null }
+      const data = {
+        name: compForm.name,
+        category_id: compForm.category_id ? parseInt(compForm.category_id) : null,
+        description: compForm.description || null,
+      }
       if (editingComp) {
         const updated = await updateCompetency(editingComp.id, data)
         setCompetencies(prev => prev.map(c => c.id === editingComp.id ? updated : c))

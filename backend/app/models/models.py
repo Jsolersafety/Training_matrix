@@ -188,6 +188,7 @@ class TrainingRecord(Base):
     provider_name = Column(String(150))
     cost = Column(Numeric(10, 2))
     file_path = Column(String(500))  # uploaded certificate path
+    cm10_link = Column(String(500))  # CM10 hyperlink
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

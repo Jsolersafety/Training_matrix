@@ -1,0 +1,1 @@
+ALTER TABLE training_records ADD COLUMN IF NOT EXISTS cm10_link VARCHAR(500);

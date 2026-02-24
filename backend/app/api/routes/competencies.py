@@ -48,10 +48,16 @@ async def get_competency(comp_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/", response_model=CompetencyOut, status_code=201)
 async def create_competency(data: CompetencyCreate, db: AsyncSession = Depends(get_db)):
-    comp = Competency(**data.model_dump())
+    comp_data = data.model_dump()
+    for field in ['description', 'how_achieved', 'voc_document_name', 'internal_document_name']:
+        if comp_data.get(field) == '':
+            comp_data[field] = None
+    if comp_data.get('category_id') == '' or comp_data.get('category_id') == 0:
+        comp_data['category_id'] = None
+    comp = Competency(**comp_data)
     db.add(comp)
     await db.flush()
-    await db.refresh(comp)
+    await db.refresh(comp, ["category"])
     return comp
 
 
@@ -60,10 +66,17 @@ async def update_competency(comp_id: int, data: CompetencyUpdate, db: AsyncSessi
     comp = await db.get(Competency, comp_id)
     if not comp:
         raise HTTPException(404, "Competency not found")
-    for k, v in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    # Convert empty strings to None for optional fields
+    for field in ['description', 'how_achieved', 'voc_document_name', 'internal_document_name']:
+        if update_data.get(field) == '':
+            update_data[field] = None
+    if update_data.get('category_id') == '' or update_data.get('category_id') == 0:
+        update_data['category_id'] = None
+    for k, v in update_data.items():
         setattr(comp, k, v)
     await db.flush()
-    await db.refresh(comp)
+    await db.refresh(comp, ["category"])
     return comp
 
 

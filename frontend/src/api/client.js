@@ -64,6 +64,7 @@ export const uploadCertificate = (recordId, file) => {
 
 // ── Reports ─────────────────────────────────────────────────
 export const fetchComplianceReport = (deptId) => api.get('/reports/compliance', { params: deptId ? { department_id: deptId } : {} }).then(r => r.data)
+export const fetchComplianceDetail = (personId) => api.get(`/reports/compliance/detail/${personId}`).then(r => r.data)
 export const fetchDepartmentSummary = () => api.get('/reports/departments').then(r => r.data)
 export const fetchExpiringTraining = (days = 30) => api.get('/reports/expiring', { params: { days } }).then(r => r.data)
 export const fetchDashboardStats = () => api.get('/reports/stats').then(r => r.data)

@@ -44,10 +44,15 @@ async def get_record(record_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/", response_model=TrainingRecordOut, status_code=201)
 async def create_record(data: TrainingRecordCreate, db: AsyncSession = Depends(get_db)):
-    record = TrainingRecord(**data.model_dump())
+    record_data = data.model_dump()
+    # Convert empty strings to None
+    for field in ['certificate_number', 'provider_name', 'notes']:
+        if record_data.get(field) == '':
+            record_data[field] = None
+    record = TrainingRecord(**record_data)
     db.add(record)
     await db.flush()
-    await db.refresh(record)
+    await db.refresh(record, ["course"])
     return record
 
 

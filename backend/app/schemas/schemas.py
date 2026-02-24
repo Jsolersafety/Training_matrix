@@ -168,6 +168,7 @@ class TrainingRecordBase(BaseModel):
     certificate_number: Optional[str] = None
     provider_name: Optional[str] = None
     cost: Optional[Decimal] = None
+    cm10_link: Optional[str] = None
     notes: Optional[str] = None
 
 class TrainingRecordCreate(TrainingRecordBase):
@@ -179,6 +180,7 @@ class TrainingRecordUpdate(TrainingRecordBase):
 class TrainingRecordOut(TrainingRecordBase):
     id: int
     file_path: Optional[str] = None
+    cm10_link: Optional[str] = None
     course: Optional[TrainingCourseOut] = None
     class Config:
         from_attributes = True
