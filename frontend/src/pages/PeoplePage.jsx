@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { fetchPeople, createPerson, updatePerson, deletePerson, importCSV, fetchRoles, fetchDepartments, fetchRecords, createRecord, fetchCourses, fetchCompetencies, uploadCertificate } from '../api/client'
 import { Modal, Spinner, EmptyState, StatusBadge } from '../components/ui'
@@ -15,6 +15,7 @@ export default function PeoplePage() {
   const [recordModal, setRecordModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [selectedPerson, setSelectedPerson] = useState(null)
+  const recordsRef = useRef(null)
   const [records, setRecords] = useState([])
   const [search, setSearch] = useState('')
   const [filterDept, setFilterDept] = useState('')
@@ -73,6 +74,7 @@ export default function PeoplePage() {
     try {
       const recs = await fetchRecords({ person_id: person.id })
       setRecords(recs)
+      setTimeout(() => recordsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch { toast.error('Failed to load records') }
   }
 
@@ -176,7 +178,7 @@ export default function PeoplePage() {
 
       {/* Training Records Panel */}
       {selectedPerson && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div ref={recordsRef} className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between mb-4">
             <h2 className="text-xl font-bold">{selectedPerson.first_name} {selectedPerson.last_name} — Training Records</h2>
             <div className="flex gap-2">

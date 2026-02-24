@@ -4,11 +4,73 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case
 from app.core.database import get_db
 from app.models import (
-    Person, Role, Department, RoleCompetency, TrainingRecord, Competency
+    Person, Role, Department, RoleCompetency, TrainingRecord, Competency, TrainingCourse
 )
 from app.schemas import ComplianceSummary, DepartmentSummary, ExpiringTraining
 
 router = APIRouter(prefix="/reports", tags=["reports"])
+
+
+@router.get("/compliance/detail/{person_id}")
+async def compliance_detail(person_id: int, db: AsyncSession = Depends(get_db)):
+    """Get detailed competency breakdown for a person — which are done, expired, missing."""
+    today = date.today()
+    thirty_days = today + timedelta(days=30)
+
+    person = await db.get(Person, person_id)
+    if not person or not person.role_id:
+        return []
+
+    # Get required competencies for this role
+    req_result = await db.execute(
+        select(RoleCompetency, Competency)
+        .join(Competency, RoleCompetency.competency_id == Competency.id)
+        .where(RoleCompetency.role_id == person.role_id)
+        .order_by(Competency.name)
+    )
+    requirements = req_result.all()
+
+    # Get training records
+    records_result = await db.execute(
+        select(TrainingRecord).where(TrainingRecord.person_id == person_id)
+    )
+    records = records_result.scalars().all()
+    records_map = {r.competency_id: r for r in records}
+
+    details = []
+    for req, comp in requirements:
+        record = records_map.get(comp.id)
+        if record:
+            if record.expiry_date and record.expiry_date < today:
+                status = "expired"
+            elif record.expiry_date and record.expiry_date <= thirty_days:
+                status = "expiring"
+            else:
+                status = "complete"
+        else:
+            status = "missing"
+
+        details.append({
+            "competency_id": comp.id,
+            "competency_name": comp.name,
+            "requirement_type": req.requirement_type,
+            "status": status,
+            "completed_date": record.completed_date.isoformat() if record else None,
+            "expiry_date": record.expiry_date.isoformat() if record and record.expiry_date else None,
+            "certificate_number": record.certificate_number if record else None,
+            "course_name": None,
+            "cm10_link": getattr(record, 'cm10_link', None) if record else None,
+            "provider_name": record.provider_name if record else None,
+        })
+
+    # Fill in course names
+    for d in details:
+        rec = records_map.get(d["competency_id"])
+        if rec and rec.course_id:
+            course = await db.get(TrainingCourse, rec.course_id)
+            d["course_name"] = course.name if course else None
+
+    return details
 
 
 @router.get("/compliance", response_model=list[ComplianceSummary])
