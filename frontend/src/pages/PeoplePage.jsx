@@ -90,19 +90,30 @@ export default function PeoplePage() {
   }
 
   const openRecordModal = () => {
-    setRecordForm({ competency_id: '', course_id: '', completed_date: new Date().toISOString().split('T')[0], expiry_date: '', certificate_number: '', notes: '' })
+    setRecordForm({ competency_id: '', course_id: '', completed_date: new Date().toISOString().split('T')[0], expiry_date: '', certificate_number: '', cm10_link: '', notes: '' })
     setRecordModal(true)
   }
 
   const handleSaveRecord = async (e) => {
     e.preventDefault()
     try {
-      const data = { ...recordForm, person_id: selectedPerson.id, competency_id: parseInt(recordForm.competency_id), course_id: recordForm.course_id ? parseInt(recordForm.course_id) : null, expiry_date: recordForm.expiry_date || null }
+      const data = {
+        person_id: selectedPerson.id,
+        competency_id: parseInt(recordForm.competency_id),
+        course_id: recordForm.course_id ? parseInt(recordForm.course_id) : null,
+        completed_date: recordForm.completed_date,
+        expiry_date: recordForm.expiry_date || null,
+        certificate_number: recordForm.certificate_number || null,
+        provider_name: recordForm.provider_name || null,
+        cost: recordForm.cost ? parseFloat(recordForm.cost) : null,
+        cm10_link: recordForm.cm10_link || null,
+        notes: recordForm.notes || null,
+      }
       const created = await createRecord(data)
       setRecords(prev => [...prev, created])
       toast.success('Record added')
       setRecordModal(false)
-    } catch { toast.error('Failed to save record') }
+    } catch (err) { toast.error(err.response?.data?.detail || 'Failed to save record') }
   }
 
   const getStatus = (record) => {
@@ -183,6 +194,7 @@ export default function PeoplePage() {
                   <th className="text-left p-3">Expiry</th>
                   <th className="text-left p-3">Status</th>
                   <th className="text-left p-3">Certificate</th>
+                  <th className="text-left p-3">CM10</th>
                 </tr></thead>
                 <tbody>{records.map(rec => {
                   const comp = competencies.find(c => c.id === rec.competency_id)
@@ -194,6 +206,7 @@ export default function PeoplePage() {
                       <td className="p-3">{rec.expiry_date ? new Date(rec.expiry_date).toLocaleDateString() : 'No expiry'}</td>
                       <td className="p-3"><StatusBadge status={getStatus(rec)} /></td>
                       <td className="p-3">{rec.certificate_number || '-'}</td>
+                      <td className="p-3">{rec.cm10_link ? <a href={rec.cm10_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">Open CM10</a> : '-'}</td>
                     </tr>
                   )
                 })}</tbody>
@@ -240,6 +253,7 @@ export default function PeoplePage() {
             <div><label className="block text-sm font-medium mb-1">Expiry Date</label><input type="date" className="w-full px-3 py-2 border rounded-lg" value={recordForm.expiry_date} onChange={e => setRecordForm({...recordForm, expiry_date: e.target.value})} /></div>
           </div>
           <div><label className="block text-sm font-medium mb-1">Certificate #</label><input className="w-full px-3 py-2 border rounded-lg" value={recordForm.certificate_number} onChange={e => setRecordForm({...recordForm, certificate_number: e.target.value})} /></div>
+          <div><label className="block text-sm font-medium mb-1">CM10 Link</label><input type="url" className="w-full px-3 py-2 border rounded-lg" placeholder="https://..." value={recordForm.cm10_link} onChange={e => setRecordForm({...recordForm, cm10_link: e.target.value})} /></div>
           <div><label className="block text-sm font-medium mb-1">Notes</label><textarea className="w-full px-3 py-2 border rounded-lg" rows="2" value={recordForm.notes} onChange={e => setRecordForm({...recordForm, notes: e.target.value})} /></div>
           <div className="flex gap-3">
             <button type="submit" className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Save</button>
