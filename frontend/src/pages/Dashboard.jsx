@@ -33,8 +33,8 @@ export default function Dashboard() {
   const [loadingEdit, setLoadingEdit] = useState(false)
 
   useEffect(() => {
-    Promise.all([fetchDashboardStats(), fetchExpiringTraining(30)])
-      .then(([s, e]) => { setStats(s); setExpiring(e) })
+    Promise.all([fetchDashboardStats(), fetchExpiringTraining(30), fetchRoles(), fetchDepartments(), fetchCategories(), fetchCompetencies()])
+      .then(([s, e, r, d, cat, comp]) => { setStats(s); setExpiring(e); setRoles(r); setDepartments(d); setCategories(cat); setCompetencies(comp) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
@@ -47,7 +47,6 @@ export default function Dashboard() {
   }
 
   const openAddRole = () => {
-    loadFormData()
     setRoleForm({ name: '', department_id: '', role_type: 'primary', description: '' })
     setSelectedComps({})
     setCompSearch('')
@@ -60,7 +59,6 @@ export default function Dashboard() {
     setEditRoleModal(true)
     setEditSearch('')
     try {
-      if (competencies.length === 0) await loadFormData()
       const reqs = await fetchRoleCompetencies(role.id)
       const comps = {}
       reqs.forEach(r => { comps[r.competency_id] = r.requirement_type })
