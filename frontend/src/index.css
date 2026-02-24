@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.badge-internal { @apply bg-emerald-500 text-white; }
+.badge-external { @apply bg-violet-500 text-white; }
+.status-complete { @apply bg-green-500 text-white; }
+.status-expiring { @apply bg-amber-500 text-white; }
+.status-expired { @apply bg-red-500 text-white; }
+.status-pending { @apply bg-slate-400 text-white; }

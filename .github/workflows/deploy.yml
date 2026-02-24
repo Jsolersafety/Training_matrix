@@ -1,0 +1,62 @@
+name: Deploy to Kamatera
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Kamatera via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 10m
+          script: |
+            set -e
+            APP_DIR="/opt/training-matrix"
+            
+            if [ -d "$APP_DIR" ]; then
+              cd "$APP_DIR"
+              git fetch origin
+              git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
+            else
+              git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
+              cd "$APP_DIR"
+            fi
+            
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              sed -i "s/changeme_in_production/$(openssl rand -hex 16)/" .env
+              sed -i "s/change-this-secret-key-in-production/$(openssl rand -hex 32)/" .env
+            fi
+            
+            # Run migrations
+            docker compose exec -T db psql -U training_app training_matrix -f /dev/stdin < scripts/migrate_001_role_type.sql 2>/dev/null || true
+            
+            docker compose build --no-cache
+            docker compose down --remove-orphans 2>/dev/null || true
+            docker compose up -d
+            
+            sleep 15
+            
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:8000/api/health > /dev/null 2>&1; then
+                echo "✅ Deploy successful!"
+                break
+              fi
+              sleep 2
+            done
+            
+            docker image prune -f 2>/dev/null || true
