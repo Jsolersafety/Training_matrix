@@ -58,10 +58,15 @@ async def get_person(person_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/", response_model=PersonOut, status_code=201)
 async def create_person(data: PersonCreate, db: AsyncSession = Depends(get_db)):
-    person = Person(**data.model_dump())
+    person_data = data.model_dump()
+    # Convert empty strings to None for unique fields
+    for field in ['email', 'employee_number', 'usi', 'phone']:
+        if person_data.get(field) == '':
+            person_data[field] = None
+    person = Person(**person_data)
     db.add(person)
     await db.flush()
-    await db.refresh(person)
+    await db.refresh(person, ["role", "department"])
     return person
 
 
@@ -71,9 +76,12 @@ async def update_person(person_id: int, data: PersonUpdate, db: AsyncSession = D
     if not person:
         raise HTTPException(404, "Person not found")
     for k, v in data.model_dump(exclude_unset=True).items():
+        # Convert empty strings to None for unique fields
+        if k in ['email', 'employee_number', 'usi', 'phone'] and v == '':
+            v = None
         setattr(person, k, v)
     await db.flush()
-    await db.refresh(person)
+    await db.refresh(person, ["role", "department"])
     return person
 
 
