@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import get_settings
 from app.core.database import engine, Base
-from app.api.routes import departments, roles, competencies, matrix, courses, people, training_records, reports
+from app.api.routes import departments, roles, competencies, matrix, courses, people, training_records, reports, auth
 
 settings = get_settings()
 
@@ -13,6 +13,11 @@ async def lifespan(app: FastAPI):
     # Startup: create tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Seed default admin
+    from app.core.auth import seed_default_admin
+    from app.core.database import AsyncSessionLocal
+    async with AsyncSessionLocal() as session:
+        await seed_default_admin(session)
     yield
     # Shutdown
     await engine.dispose()
@@ -43,6 +48,7 @@ app.include_router(courses.router, prefix="/api")
 app.include_router(people.router, prefix="/api")
 app.include_router(training_records.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
 
 
 @app.get("/api/health")

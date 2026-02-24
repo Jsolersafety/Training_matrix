@@ -5,6 +5,25 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+// Set token from localStorage on startup
+const savedToken = localStorage.getItem('token')
+if (savedToken) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`
+}
+
+// Auto-logout on 401
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+      localStorage.removeItem('token')
+      delete api.defaults.headers.common['Authorization']
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
 // ── Departments ─────────────────────────────────────────────
 export const fetchDepartments = () => api.get('/departments/').then(r => r.data)
 export const createDepartment = (data) => api.post('/departments/', data).then(r => r.data)
