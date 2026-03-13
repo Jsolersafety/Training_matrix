@@ -9,6 +9,7 @@ import CoursesPage from './pages/CoursesPage'
 import PeoplePage from './pages/PeoplePage'
 import ReportsPage from './pages/ReportsPage'
 import UsersPage from './pages/UsersPage'
+import AdminPage from './pages/AdminPage'
 
 function ProtectedRoutes() {
   const { user, loading, isAdmin } = useAuth()
@@ -30,6 +31,7 @@ function ProtectedRoutes() {
         <Route path="/people" element={<PeoplePage />} />
         <Route path="/reports" element={<ReportsPage />} />
         {isAdmin && <Route path="/users" element={<UsersPage />} />}
+        {isAdmin && <Route path="/admin" element={<AdminPage />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

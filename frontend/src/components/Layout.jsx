@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutGrid, BookOpen, Users, BarChart3, GraduationCap, LogOut, Shield, UserCog } from 'lucide-react'
+import { LayoutGrid, BookOpen, Users, BarChart3, GraduationCap, LogOut, Shield, UserCog, Settings } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 
 export default function Layout() {
@@ -16,6 +16,7 @@ export default function Layout() {
 
   if (isAdmin) {
     navItems.push({ to: '/users', icon: UserCog, label: 'Users' })
+    navItems.push({ to: '/admin', icon: Settings, label: 'Admin' })
   }
 
   return (
